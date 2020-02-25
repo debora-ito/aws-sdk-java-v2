@@ -15,9 +15,9 @@
 
 package software.amazon.awssdk.core.retry.conditions;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import software.amazon.awssdk.annotations.SdkPublicApi;
 import software.amazon.awssdk.core.retry.RetryPolicyContext;
 import software.amazon.awssdk.utils.ToString;
@@ -29,10 +29,14 @@ import software.amazon.awssdk.utils.Validate;
 @SdkPublicApi
 public final class AndRetryCondition implements RetryCondition {
 
-    private Set<RetryCondition> conditions = new HashSet<>();
+    private List<RetryCondition> conditions = new ArrayList<>();
 
     private AndRetryCondition(RetryCondition... conditions) {
         Collections.addAll(this.conditions, Validate.notEmpty(conditions, "%s cannot be empty.", "conditions"));
+    }
+
+    public static AndRetryCondition create(RetryCondition... conditions) {
+        return new AndRetryCondition(conditions);
     }
 
     /**
@@ -43,8 +47,14 @@ public final class AndRetryCondition implements RetryCondition {
         return conditions.stream().allMatch(r -> r.shouldRetry(context));
     }
 
-    public static AndRetryCondition create(RetryCondition... conditions) {
-        return new AndRetryCondition(conditions);
+    @Override
+    public void requestWillNotBeRetried(RetryPolicyContext context) {
+        conditions.forEach(c -> c.requestWillNotBeRetried(context));
+    }
+
+    @Override
+    public void requestSucceeded(RetryPolicyContext context) {
+        conditions.forEach(c -> c.requestSucceeded(context));
     }
 
     @Override

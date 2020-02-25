@@ -22,12 +22,16 @@ import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 import software.amazon.awssdk.annotations.SdkInternalApi;
+import software.amazon.awssdk.core.SdkSystemSetting;
 import software.amazon.awssdk.core.exception.ApiCallAttemptTimeoutException;
 import software.amazon.awssdk.core.exception.RetryableException;
+import software.amazon.awssdk.core.retry.RetryMode;
 import software.amazon.awssdk.http.HttpStatusCode;
+import software.amazon.awssdk.utils.Validate;
 
 @SdkInternalApi
 public final class SdkDefaultRetrySetting {
+    public static final String SDK_RETRY_INFO_HEADER = "amz-sdk-retry";
 
     /**
      * When throttled retries are enabled, each retry attempt will consume this much capacity.
@@ -42,6 +46,8 @@ public final class SdkDefaultRetrySetting {
      * that may be attempted before retry capacity is fully drained.
      */
     public static final int THROTTLED_RETRIES = 100;
+
+    public static final int TOKEN_BUCKET_SIZE = RETRY_THROTTLING_COST * THROTTLED_RETRIES;
 
     public static final Duration BASE_DELAY = Duration.ofMillis(100);
 
@@ -70,4 +76,29 @@ public final class SdkDefaultRetrySetting {
     }
 
     private SdkDefaultRetrySetting() {}
+
+    public static Integer maxAttempts(RetryMode retryMode) {
+        Integer maxAttempts = SdkSystemSetting.AWS_MAX_ATTEMPTS.getIntegerValue().orElse(null);
+
+        if (maxAttempts == null) {
+            switch (retryMode) {
+                case LEGACY:
+                    maxAttempts = 4;
+                    break;
+                case STANDARD:
+                    maxAttempts = 3;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown retry mode: " + retryMode);
+            }
+        }
+
+        Validate.isPositive(maxAttempts, "Maximum attempts must be positive, but was " + maxAttempts);
+
+        return maxAttempts;
+    }
+
+    public static Integer defaultMaxAttempts() {
+        return maxAttempts(RetryMode.defaultRetryMode());
+    }
 }
