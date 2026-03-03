@@ -487,7 +487,8 @@
       "login": "debora-ito",
       "avatar_url": "https://avatars.githubusercontent.com/u/476307?v=4",
       "contributions": [
-        "code"
+        "code",
+        "maintenance"
       ],
       "name": "Debora N. Ito"
     },
@@ -1106,7 +1107,7 @@
   ],
   "contributorsPerLine": 7,
   "projectName": "aws-sdk-java-v2",
-  "projectOwner": "aws",
+  "projectOwner": "debora-ito",
   "repoType": "github",
   "repoHost": "https://github.com",
   "skipCi": true,
